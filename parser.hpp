@@ -26,7 +26,7 @@ private:
 
 public:
 	parser(const char* filename , char* v_m , char* static_s , char* heap_s , char*stack_s,
-		vector<line_keeper> l_b , map<string, int> f_b , map<string, int> d_b , int* r , int m) {
+		vector<line_keeper> *l_b , map<string, int> *f_b , map<string, int> *d_b , int* r , int* m) {
 		file_in.open(filename);
 		if (file_in.is_open()) cout << "file_is_open" << endl;
 		vir_mem = v_m;
@@ -109,12 +109,12 @@ private:
 		else return label;
 	}
 
-	map<string, int> database;//用于存储label的变量；
-	map<string, int> funcbase;//用于存储label的函数；
+	map<string, int> *database;//用于存储label的变量；
+	map<string, int> *funcbase;//用于存储label的函数；
 	int* reg;
 	int line_counter = 0;
-	vector<line_keeper> line_base;//用于存储所有的代码；
-	int mainpos;
+	vector<line_keeper> *line_base;//用于存储所有的代码；
+	int* mainpos;
 
 	int string_to_reg(string str) {
 		if (str == "$zero") return 0;
@@ -189,12 +189,54 @@ private:
 		if (str == "$34") return 34;
 	}
 
+	string process(string str)
+	{
+		string tmp;
+		for (size_t i = 1; i < str.size() - 1; i++)
+		{
+			if (str[i] == '\\')
+			{
+				i++;
+				if (str[i] == '\\')
+				{
+					tmp += '\\';
+				}
+				if (str[i] == '\"')
+				{
+					tmp += '\"';
+				}
+				if (str[i] == 'n')
+				{
+					tmp += '\n';
+				}
+				if (str[i] == 't')
+				{
+					tmp += '\t';
+				}
+				if (str[i] == 'r')
+				{
+					tmp += '\r';
+				}
+				if (str[i] == '0')
+				{
+					tmp += '\0';
+				}
+			}
+			else
+			{
+				tmp += str[i];
+			}
+		}
+		return tmp;
+	}
+
 public:
 	bool pre_deal() {
 		if (file_in.eof()) return false;
 		else {
 			string _buffer;
 			getline(file_in, _buffer);
+			if (_buffer == "") return true;
 			Tokenscanner token(_buffer);
 			token.setInput(_buffer);
 			line_keeper line;
@@ -209,7 +251,7 @@ public:
 				return true;
 			}
 			if (line.command == mainp) {
-				mainpos = line_counter;
+				*mainpos = line_counter;
 				return true;
 			}
 			if (line.command == _align) {
@@ -225,7 +267,7 @@ public:
 			}
 			if (line.command == _ascii || line.command == _asciiz) {
 				string str1 = token.nextToken();
-				str1 = str1.substr(1, str1.size() - 2);
+				str1 = process(str1);
 				char* str = const_cast<char*>(str1.c_str());
 				memcpy(static_seg, str, sizeof(str));
 				static_seg += sizeof(str);
@@ -251,13 +293,13 @@ public:
 			}
 			if (line.command == label) {
 				if (is_text) {
-					_buffer = _buffer.substr(0, _buffer.size() - 1);
-					funcbase[_buffer] = line_counter;
+					fir = fir.substr(0, fir.size() - 1);
+					funcbase->operator[](fir) = line_counter;
 					return true;
 				}
 				else {
-					_buffer = _buffer.substr(0, _buffer.size() - 1);
-					database[_buffer] = static_seg - vir_mem;
+					fir = fir.substr(0, fir.size() - 1);
+					database->operator[](fir) = static_seg - vir_mem;
 					return true;
 				}
 			}
@@ -282,7 +324,7 @@ public:
 				}
 				line.arg_num = 3;
 				line.line_num = line_counter;
-				line_base.push_back(line);
+				line_base->push_back(line);
 				return true;
 			}
 			if (line.command == addiu) {
@@ -294,7 +336,7 @@ public:
 				line.Imm = stoi(str);
 				line.arg_num = 3;
 				line.line_num = line_counter;
-				line_base.push_back(line);
+				line_base->push_back(line);
 				return true;
 			}
 			if (line.command == mul || line.command == mulu) {
@@ -326,7 +368,7 @@ public:
 					line.arg_num = 2;
 				}
 				line.line_num = line_counter;
-				line_base.push_back(line);
+				line_base->push_back(line);
 				return true;
 			}
 			if (line.command == divv || line.command == divu) {
@@ -352,7 +394,7 @@ public:
 					line.arg_num = 2;
 				}
 				line.line_num = line_counter;
-				line_base.push_back(line);
+				line_base->push_back(line);
 				return true;
 			}
 			if (line.command == neg || line.command == negu || line.command == mov) {
@@ -362,7 +404,7 @@ public:
 				line.Rsrc = string_to_reg(str);
 				line.arg_num = 2;
 				line.line_num = line_counter;
-				line_base.push_back(line);
+				line_base->push_back(line);
 				return true;
 			}
 			if (line.command == li) {
@@ -372,7 +414,7 @@ public:
 				line.Imm = stoi(str);
 				line.arg_num = 2;
 				line.line_num = line_counter;
-				line_base.push_back(line);
+				line_base->push_back(line);
 				return true;
 			}
 			if (line.command == b || line.command == j || line.command == jal) {
@@ -380,7 +422,7 @@ public:
 				line.label_name = str;
 				line.arg_num = 1;
 				line.line_num = line_counter;
-				line_base.push_back(line);
+				line_base->push_back(line);
 				return true;
 			}
 			if (line.command == beq || line.command == bne || line.command == bge ||
@@ -400,7 +442,7 @@ public:
 				line.label_name = str;
 				line.arg_num = 3;
 				line.line_num = line_counter;
-				line_base.push_back(line);
+				line_base->push_back(line);
 				return true;
 			}
 			if (line.command == beqz || line.command == bnez || line.command == blez ||
@@ -411,7 +453,7 @@ public:
 				line.label_name = str;
 				line.arg_num = 2;
 				line.line_num = line_counter;
-				line_base.push_back(line);
+				line_base->push_back(line);
 				return true;
 			}
 			if (line.command == jr || line.command == jalr) {
@@ -419,7 +461,7 @@ public:
 				line.Rsrc = string_to_reg(str);
 				line.line_num = line_counter;
 				line.arg_num = 1;
-				line_base.push_back(line);
+				line_base->push_back(line);
 				return true;
 			}
 			if (line.command == la || line.command == lb ||
@@ -447,7 +489,7 @@ public:
 						line.ad_reg = string_to_reg(str2);
 						line.arg_num = 2;
 						line.line_num = line_counter;
-						line_base.push_back(line);
+						line_base->push_back(line);
 						return true;
 					}
 				}
@@ -455,7 +497,7 @@ public:
 				line.label_name = str;
 				line.arg_num = 2;
 				line.line_num = line_counter;
-				line_base.push_back(line);
+				line_base->push_back(line);
 				return true;
 			}
 			if (line.command == sb || line.command == sh || line.command == sw) {
@@ -482,7 +524,7 @@ public:
 						line.ad_reg = string_to_reg(str2);
 						line.arg_num = 2;
 						line.line_num = line_counter;
-						line_base.push_back(line);
+						line_base->push_back(line);
 						return true;
 					}
 				}
@@ -490,7 +532,7 @@ public:
 				line.label_name = str;
 				line.arg_num = 2;
 				line.line_num = line_counter;
-				line_base.push_back(line);
+				line_base->push_back(line);
 				return true;
 			}
 			if (line.command == mfhi || line.command == mflo) {
@@ -498,20 +540,16 @@ public:
 				line.Rdest = string_to_reg(str);
 				line.arg_num = 1;
 				line.line_num = line_counter;
-				line_base.push_back(line);
+				line_base->push_back(line);
 				return true;
 			}
 			if (line.command == nop || line.command == syscall) {
 				line.arg_num = 0;
 				line.line_num = line_counter;
-				line_base.push_back(line);
+				line_base->push_back(line);
 				return true;
 			}
 		}
-	}
-
-	void file_out() {
-		cout << line_base.size() << endl;
 	}
 };
 
