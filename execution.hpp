@@ -22,7 +22,7 @@ private:
 
 
 public:
-	execution(char* v_m , char* static_s , char* stack_s , char* heap_s , map<string, int> *d_b,
+	execution(char*& v_m , char*& static_s , char*& stack_s , char*& heap_s , map<string, int> *d_b,
 		map<string, int> *f_b , vector<line_keeper> *l_b , int *m , int* r) {
 		vir_mem = v_m;
 		static_seg = static_s;

@@ -12,37 +12,30 @@
 #include"scanner.hpp"
 #include"line_keeper.hpp"
 
-using namespace std;
 
-static int is_text;
-
-class parser {
+class new_parser {
 private:
 	ifstream file_in;
-	char* vir_mem;
-	char* static_seg;
-	char* heap_seg;
-	char* stack_seg;
-
+	map<string, int> *database;//用于存储label的变量；
+	map<string, int> *funcbase;//用于存储label的函数；
+	int* reg;
+	int line_counter = 0;
+	vector<line_keeper> *line_base;//用于存储所有的代码；
+	int* mainpos;
+	bool is_text = false;
 public:
-	parser(const char* filename , char* v_m , char* static_s , char* heap_s , char*stack_s,
-		vector<line_keeper> *l_b , map<string, int> *f_b , map<string, int> *d_b , int* r , int* m) {
+	new_parser(const char* filename , map<string, int> *d_b , map<string, int> *f_b , vector<line_keeper> *l_b,
+	int* r , int* m) {
 		file_in.open(filename);
-		if (file_in.is_open()) cout << "file_is_open" << endl;
-		vir_mem = v_m;
-		static_seg = static_s;
-		heap_seg = heap_s;
-		stack_seg = stack_s;
-		line_base = l_b;
-		funcbase = f_b;
 		database = d_b;
+		funcbase = f_b;
+		line_base = l_b;
 		reg = r;
 		mainpos = m;
-	}
-
-	~parser() {
+	};
+	~new_parser() {
 		file_in.close();
-	}
+	};
 
 private:
 	func string_to_func(string str) {
@@ -108,13 +101,6 @@ private:
 		if (str == "main:") return mainp;
 		else return label;
 	}
-
-	map<string, int> *database;//用于存储label的变量；
-	map<string, int> *funcbase;//用于存储label的函数；
-	int* reg;
-	int line_counter = 0;
-	vector<line_keeper> *line_base;//用于存储所有的代码；
-	int* mainpos;
 
 	int string_to_reg(string str) {
 		if (str == "$zero") return 0;
@@ -231,7 +217,7 @@ private:
 	}
 
 public:
-	bool pre_deal() {
+	bool pre_deal(char*& vir_mem, char*& static_seg, char*& heap_seg, char*& stack_seg) {
 		if (file_in.eof()) return false;
 		else {
 			string _buffer;
@@ -242,6 +228,7 @@ public:
 			line_keeper line;
 			string fir = token.nextToken();
 			line.command = string_to_func(fir);
+
 			if (line.command == _data) {
 				is_text = false;
 				return true;
@@ -258,10 +245,12 @@ public:
 				string str = token.nextToken();
 				int n = stoi(str);
 				n = pow(2, n);
-				int cur_mem = atoi(vir_mem);
-				if (cur_mem % n == 0) return true;
+				int cur_seg = atoi(static_seg);
+				if (cur_seg % n == 0) return true;
 				else {
-					vir_mem += (cur_mem / n + 1) * n - cur_mem;
+					int x = (cur_seg / n + 1) * n - cur_seg;
+					static_seg += x;
+					heap_seg += x;
 					return true;
 				}
 			}
@@ -275,14 +264,36 @@ public:
 				return true;
 			}
 			if (line.command == _byte || line.command == _half || line.command == _word) {
-				while (token.hasMoreTokens()) {
-					string str1 = token.nextToken();
-					char* str = const_cast<char*>(str1.c_str());
-					memcpy(static_seg, str, sizeof(str));
-					static_seg += sizeof(str);
-					heap_seg += sizeof(str);
+				if (line.command == _byte) {
+					while (token.hasMoreTokens()) {
+						string str1 = token.nextToken();
+						char* str = const_cast<char*>(str1.c_str());
+						memcpy(static_seg, str, 1);
+						static_seg += 1;
+						heap_seg += 1;
+					}
+					return true;
 				}
-				return true;
+				if (line.command == _half) {
+					while (token.hasMoreTokens()) {
+						string str1 = token.nextToken();
+						char* str = const_cast<char*>(str1.c_str());
+						memcpy(static_seg, str, 2);
+						static_seg += 2;
+						heap_seg += 2;
+					}
+					return true;
+				}
+				if (line.command == _word) {
+					while (token.hasMoreTokens()) {
+						string str1 = token.nextToken();
+						char* str = const_cast<char*>(str1.c_str());
+						memcpy(static_seg, str, 4);
+						static_seg += 4;
+						heap_seg += 4;
+					}
+					return true;
+				}
 			}
 			if (line.command == _space) {
 				string str = token.nextToken();
@@ -306,8 +317,8 @@ public:
 			line_counter++;
 			if (line.command == add || line.command == addu || line.command == sub ||
 				line.command == subu || line.command == xoor || line.command == xoru ||
-				line.command == rem || line.command == remu || line.command == seq || 
-				line.command == sge || line.command == sgt || line.command == sle || 
+				line.command == rem || line.command == remu || line.command == seq ||
+				line.command == sge || line.command == sgt || line.command == sle ||
 				line.command == slt || line.command == sne) {
 				string str = token.nextToken();
 				line.Rdest = string_to_reg(str);
@@ -551,6 +562,11 @@ public:
 			}
 		}
 	}
+
+
+
+
+
 };
 
 #endif
