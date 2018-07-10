@@ -1,43 +1,43 @@
 #include<iostream>
 #include<cctype>
 #include<string>
-#include<vector>
 #include<map>
-#include<stdlib.h>
-#include"line_keeper.hpp"
-#include"new_parser.hpp"
+#include<vector>
 #include"scanner.hpp"
+#include"parser.hpp"
+#include"line_keeper.hpp"
 #include"constant.hpp"
 #include"execution.hpp"
 
-int main(){
-    char* vir_mem = new char[4*1024*1024];
-	memset(vir_mem, 0, 4 * 1024 * 1024 * sizeof(char));
-	char* static_seg = vir_mem;
-	char* heap_seg = vir_mem;
-	char* stack_seg = vir_mem + 4 * 1024 * 1024 - 1;
+using namespace std;
+char vir_mem[4 * 1024 * 1024];
+
+int main() {
+	memset(vir_mem, 0, 4 * 1024 * 1024);
+	int static_seg = 0;
+	int heap_seg = 0;
+	int stack_seg = 4 * 1024 * 1024 - 1;
 	map<string, int> funcbase;
 	map<string, int> database;
 	vector<line_keeper> linebase;
-	int mainpos = 0;
-	int* reg = new int[34];
-	memset(reg, 0, 34 * sizeof(int));
-	reg[0] = 0;
-	reg[29] = stack_seg - vir_mem;
-	new_parser p("array_test1-mahaojun.s", &database ,&funcbase, &linebase , reg , &mainpos);
-	int x = 0;
-    while(p.pre_deal(vir_mem , static_seg , heap_seg , stack_seg)){
+	int mainpos;
+	int reg[34];
+	memset(reg, 0, 34*sizeof(int));
+	reg[29] = 4 * 1024 * 1024 - 1;
+	parser p("heapsort-5100379110-daibo.s");
+	int x = 1;
+	while (p.pre_deal(&database, &funcbase, &linebase,
+		reg, mainpos, vir_mem, static_seg, heap_seg, stack_seg ,x)) {
 		x++;
-		if (x == 3) {
-			int xd = 0;
+		if (x == 628) {
+			int sjckn = 0;
 		}
 	}
-
-	execution exe(vir_mem, static_seg, stack_seg, heap_seg, &database,
-		&funcbase, &linebase, &mainpos, reg);
-	exe.execute();
-	delete reg;
-    free(vir_mem);
-	system("PAUSE");
-    return 0;
+	for (int i = 0; i < linebase.size(); ++i) {
+		linebase[i].out000();
+	}
+	execution e;
+	e.execute(&database, &funcbase, &linebase,
+		reg, mainpos, vir_mem, static_seg, heap_seg, stack_seg);
+	return 0;
 }
