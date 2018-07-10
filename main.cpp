@@ -13,7 +13,7 @@ using namespace std;
 char vir_mem[4 * 1024 * 1024];
 
 int main() {
-	memset(vir_mem, 0, 4 * 1024 * 1024);
+	memset(&vir_mem[0], 0, 4 * 1024 * 1024);
 	int static_seg = 0;
 	int heap_seg = 0;
 	int stack_seg = 4 * 1024 * 1024 - 1;
@@ -33,9 +33,9 @@ int main() {
 			int sjckn = 0;
 		}
 	}
-	for (int i = 0; i < linebase.size(); ++i) {
+	/*for (int i = 0; i < linebase.size(); ++i) {
 		linebase[i].out000();
-	}
+	}*/
 	execution e;
 	e.execute(&database, &funcbase, &linebase,
 		reg, mainpos, vir_mem, static_seg, heap_seg, stack_seg);

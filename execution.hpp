@@ -14,12 +14,7 @@ public:
 		int*reg, int& mainpos, char*vir_mem, int& static_seg, int& heap_seg, int& stack_seg) {
 		int n = mainpos;
 		while (n < linebase->size()) {
-			//cout << n << endl;
 			line_keeper line = linebase->operator[](n);
-			if (line.true_num == 627) {
-				int djc = 0;
-			}
-			cout << line.true_num << endl;
 			if (line.command == add) {
 				if (line.Src2_type) {
 					reg[line.Rdest] = reg[line.Rsrc1] + line.Src2_dig;
@@ -684,7 +679,9 @@ public:
 					int x;
 					if (str.size() <= (reg[5] + 1)) x = str.size();
 					else x = reg[5] + 1;
-					memcpy(&vir_mem[reg[4]], &str, x);
+					for (int i = 0; i < x; ++i) {
+						vir_mem[reg[4] + i] = str[i];
+					}
 					n++;
 					continue;
 				}
@@ -697,13 +694,13 @@ public:
 					continue;
 				}
 				if (reg[2] == 10) {
-					system("PAUSE");
+					//system("PAUSE");
 					exit(0);
 					n++;
 					continue;
 				}
 				if (reg[2] == 17) {
-					system("PAUSE");
+					//system("PAUSE");
 					exit(reg[4]);
 					n++;
 					continue;

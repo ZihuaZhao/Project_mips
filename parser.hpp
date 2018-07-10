@@ -57,6 +57,7 @@ private:
 		if (str == "li") return li;
 		if (str == "seq") return seq;
 		if (str == "sge") return sge;
+		if (str == "sgt") return sgt;
 		if (str == "sle") return sle;
 		if (str == "slt") return slt;
 		if (str == "sne") return sne;
